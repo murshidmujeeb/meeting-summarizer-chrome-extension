@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { TranscriptSegment } from "../../types";
 import { useSummary } from "../../hooks/useSummary";
 import { SummaryLevel } from "../../services/summarization";
+import { PDFExportService } from "../../services/export";
 
 interface SummaryPanelProps {
   segments: TranscriptSegment[];
@@ -18,6 +19,15 @@ export function SummaryPanel({ segments }: SummaryPanelProps) {
   const copySummary = () => {
     if (summary) {
       navigator.clipboard.writeText(summary);
+    }
+  };
+
+  const exportPDF = async () => {
+    try {
+      const blob = await PDFExportService.exportToPDF(segments, summary);
+      PDFExportService.downloadBlob(blob, `meeting-summary-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (err) {
+      console.error("PDF Export failed", err);
     }
   };
 
@@ -76,13 +86,10 @@ export function SummaryPanel({ segments }: SummaryPanelProps) {
           <div className="summary-text whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
             {summary}
           </div>
-        )}
-      </div>
-
       {summary && (
         <div className="summary-actions flex gap-2 p-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">
           <button className="btn-secondary flex-1 py-2 px-3 bg-white border border-gray-300 rounded-md text-gray-900 text-sm font-medium hover:bg-gray-100 transition-colors" onClick={copySummary}>Copy</button>
-          <button className="btn-secondary flex-1 py-2 px-3 bg-white border border-gray-300 rounded-md text-gray-900 text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50" disabled={true} title="PDF Export coming in Milestone 6">Export as PDF</button>
+          <button className="btn-secondary flex-1 py-2 px-3 bg-white border border-gray-300 rounded-md text-gray-900 text-sm font-medium hover:bg-gray-100 transition-colors" onClick={exportPDF}>Export as PDF</button>
         </div>
       )}
     </div>
