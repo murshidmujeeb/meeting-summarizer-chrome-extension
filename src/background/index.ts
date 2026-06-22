@@ -1,14 +1,19 @@
 import { AudioCaptureService } from "../services/audio";
 import { SessionManager } from "../services/storage";
+import { SpeakerDiarizationService } from "../services/diarization";
+import { AudioFrame } from "../types";
 
 const audioCapture = new AudioCaptureService();
-// const sessionManager = new SessionManager();
+const diarizationService = new SpeakerDiarizationService();
+
+audioCapture.on('audioFrame', (frame: AudioFrame) => {
+  diarizationService.processAudioFrame(frame);
+});
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Meeting Summarizer Extension Installed");
 });
 
-// Setup basic message passing if the popup needs to communicate with background
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "startRecording") {
     audioCapture.startRecording()
@@ -21,5 +26,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .then(() => sendResponse({ success: true }))
       .catch(e => sendResponse({ error: e.message }));
     return true;
+  }
+  if (request.action === "getCurrentSpeaker") {
+    const speakerInfo = diarizationService.getCurrentSpeaker();
+    sendResponse(speakerInfo);
+    return false; // Synchronous response
   }
 });

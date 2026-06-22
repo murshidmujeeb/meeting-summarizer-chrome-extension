@@ -56,7 +56,7 @@ export class WebSpeechTranscriber {
     this.recognition.stop();
   }
 
-  private handleResult(event: any) {
+  private async handleResult(event: any) {
     let interimTranscript = '';
     let finalTranscript = '';
 
@@ -68,15 +68,32 @@ export class WebSpeechTranscriber {
       }
     }
 
+    let currentSpeaker = "Speaker 1";
+    let currentConfidence = 100;
+
+    try {
+      const res = await new Promise<any>((resolve) => {
+        chrome.runtime.sendMessage({ action: "getCurrentSpeaker" }, (response) => {
+          resolve(response);
+        });
+      });
+      if (res && res.speakerId) {
+        currentSpeaker = res.speakerId;
+        currentConfidence = res.confidence;
+      }
+    } catch (e) {
+      // Ignore errors if background isn't ready
+    }
+
     const baseSegment: Omit<TranscriptSegment, 'text' | 'interim'> = {
       id: uuidv4(),
       timestamp: {
         start: Date.now(),
         end: Date.now()
       },
-      speaker: "Speaker 1",
+      speaker: currentSpeaker,
       confidence: event.results[event.results.length - 1][0].confidence * 100,
-      speakerConfidence: 100,
+      speakerConfidence: currentConfidence,
       source: 'webspeech'
     };
 

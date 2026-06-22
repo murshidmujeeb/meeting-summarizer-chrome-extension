@@ -28,7 +28,7 @@ export function TranscriptPanel({ segments }: TranscriptPanelProps) {
         {segments.map((segment) => (
           <div key={segment.id} className={`transcript-segment p-3 rounded-lg border ${segment.interim ? 'border-dashed border-gray-300 opacity-70' : 'border-solid border-gray-200 bg-gray-50 shadow-sm'}`}>
             <div className="flex items-center space-x-2 mb-1">
-              <span className="segment-speaker font-semibold text-accent">{segment.speaker}</span>
+              <span className={`segment-speaker font-semibold ${segment.speaker.toLowerCase().replace(' ', '-')}`}>{segment.speaker}</span>
               <span className="segment-timestamp text-xs text-gray-500">{formatTimestamp(segment.timestamp.start)}</span>
             </div>
             <p className="segment-text text-gray-800 leading-relaxed">{segment.text}</p>
