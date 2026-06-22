@@ -1,0 +1,61 @@
+import { useState } from "react";
+import "../styles/globals.css";
+import "./popup.css";
+import { useTranscription } from "../hooks/useTranscription";
+import { TranscriptPanel } from "./components/TranscriptPanel";
+
+function IndexPopup() {
+  const [activeTab, setActiveTab] = useState<'transcript' | 'summary'>('transcript');
+  const { segments, isLive, startTranscription, stopTranscription, error } = useTranscription();
+
+  return (
+    <div className={`meeting-summarizer-panel ${isLive ? 'recording' : ''}`}>
+      <div className="panel-header">
+        <div className="header-left">
+          <h1 className="panel-title">Meeting Assistant</h1>
+          {isLive && <span className="status-badge recording">Recording</span>}
+          {error && <span className="status-badge" style={{color: 'red'}}>Error</span>}
+        </div>
+        <div className="header-right">
+          <button 
+            className="header-btn" 
+            onClick={isLive ? stopTranscription : startTranscription}
+            title={isLive ? "Stop Recording" : "Start Recording"}
+          >
+            {isLive ? '⏹' : '▶'}
+          </button>
+        </div>
+      </div>
+
+      <div className="tab-navigation">
+        <button 
+          className={`tab ${activeTab === 'transcript' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('transcript')}
+        >
+          Transcript
+          <span className="tab-count">{segments.length}</span>
+        </button>
+        <button 
+          className={`tab ${activeTab === 'summary' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('summary')}
+        >
+          Summary
+        </button>
+      </div>
+
+      <div style={{flex: 1, overflow: 'hidden'}}>
+        {activeTab === 'transcript' && (
+          <TranscriptPanel segments={segments} />
+        )}
+        
+        {activeTab === 'summary' && (
+          <div style={{padding: 16, color: 'var(--color-secondary)'}}>
+            Summary features coming in next milestone!
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default IndexPopup;
