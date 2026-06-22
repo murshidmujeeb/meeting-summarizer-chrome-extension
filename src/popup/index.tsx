@@ -4,6 +4,8 @@ import "./popup.css";
 import { useTranscription } from "../hooks/useTranscription";
 import { TranscriptPanel } from "./components/TranscriptPanel";
 
+import { SummaryPanel } from "./components/SummaryPanel";
+
 function IndexPopup() {
   const [activeTab, setActiveTab] = useState<'transcript' | 'summary'>('transcript');
   const { segments, isLive, startTranscription, stopTranscription, error } = useTranscription();
@@ -49,9 +51,7 @@ function IndexPopup() {
         )}
         
         {activeTab === 'summary' && (
-          <div style={{padding: 16, color: 'var(--color-secondary)'}}>
-            Summary features coming in next milestone!
-          </div>
+          <SummaryPanel segments={segments} />
         )}
       </div>
     </div>
