@@ -28,16 +28,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         // Give the offscreen document time to parse scripts and register listeners
         await new Promise(r => setTimeout(r, 500));
         
-        // Init Whisper first
-        await new Promise((resolve, reject) => {
-          chrome.runtime.sendMessage({ action: "initWhisper" }, (res) => {
-            if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
-            else if (res?.error) reject(new Error(res.error));
-            else resolve(res);
-          });
-        });
-
-        // Get Stream ID from active tab
+        // Get Stream ID from active tab immediately before user switches tabs
         const tab = await new Promise<chrome.tabs.Tab>((resolve) => {
           chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => resolve(tabs[0]));
         });
@@ -49,15 +40,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           });
         });
 
-        // Start recording in offscreen doc
-        await new Promise((resolve, reject) => {
-          chrome.runtime.sendMessage({ action: "startOffscreenRecording", streamId }, (res) => {
-            if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
-            else if (res?.error) reject(new Error(res.error));
-            else resolve(res);
-          });
-        });
+        await setupOffscreenDocument("tabs/offscreen.html");
+        await new Promise(r => setTimeout(r, 500));
 
+        // Tell offscreen to start everything (fire and forget)
+        chrome.runtime.sendMessage({ action: "startOffscreenRecording", streamId });
+
+        // Acknowledge instantly so the message port doesn't close
         sendResponse({ success: true });
       } catch (e: any) {
         sendResponse({ error: e.message });

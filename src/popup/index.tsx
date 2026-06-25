@@ -68,10 +68,14 @@ function IndexPopup() {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Downloading AI Model</h3>
             <p className="text-sm text-gray-500 mb-4">First-time setup takes a few minutes depending on your connection (75MB).</p>
             
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 dark:bg-gray-700">
-              <div className="bg-accent h-2.5 rounded-full transition-all duration-300" style={{ width: `${loadingProgress.progress || 0}%` }}></div>
+            {loadingProgress.file && <p className="text-xs text-gray-500 mb-1 truncate w-full px-4 text-left">Downloading: {loadingProgress.file}</p>}
+            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 dark:bg-gray-700 overflow-hidden relative">
+              <div className="bg-accent h-2.5 rounded-full transition-all duration-300" style={{ width: `${loadingProgress.progress || (loadingProgress.status === 'done' || loadingProgress.status === 'ready' ? 100 : 0)}%` }}></div>
             </div>
-            <span className="text-xs font-medium text-gray-600">{Math.round(loadingProgress.progress || 0)}% Completed</span>
+            <div className="flex justify-between w-full px-1">
+              <span className="text-xs font-medium text-gray-500 capitalize">{loadingProgress.status || 'initializing'}...</span>
+              <span className="text-xs font-bold text-accent">{loadingProgress.status === 'ready' ? '100%' : `${Math.round(loadingProgress.progress || 0)}%`}</span>
+            </div>
           </div>
         ) : (
           <>

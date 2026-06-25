@@ -17,6 +17,13 @@ export function useTranscription() {
           newSegments.push(message.segment);
           return newSegments;
         });
+      } else if (message.action === "recordingStarted") {
+        setLoadingProgress(null);
+        setIsLive(true);
+      } else if (message.action === "recordingError") {
+        setError(message.error);
+        setLoadingProgress(null);
+        setIsLive(false);
       }
     };
 
@@ -29,27 +36,26 @@ export function useTranscription() {
 
   const startTranscription = useCallback(async () => {
     try {
+      // Set initial loading state so UI shows the downloading screen
+      setLoadingProgress({ status: 'init', progress: 0 });
+      setIsLive(true);
       setError(null);
-      setLoadingProgress({ status: 'init', name: 'Initializing Whisper...' });
-      
+
+      // Fire and forget start command. It will return instantly.
+      // We rely on "recordingStarted" and "recordingError" events below.
       await new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({ action: "startRecording" }, (res) => {
-          if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError);
-          } else if (res?.error) {
-            reject(new Error(res.error));
-          } else {
-            resolve(res);
-          }
+          if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+          else if (res?.error) reject(new Error(res.error));
+          else resolve(res);
         });
       });
-      
-      setIsLive(true);
-      setLoadingProgress(null);
+
     } catch (err: any) {
       console.error("Failed to start background capture", err);
       setError(err.toString());
       setLoadingProgress(null);
+      setIsLive(false);
     }
   }, []);
 

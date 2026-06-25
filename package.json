@@ -52,6 +52,7 @@
   },
   "alias": {
     "sharp": "./empty.js",
+    "onnxruntime-node": "./empty.js",
     "node:events": "events",
     "node:path": "path-browserify",
     "node:util": "util",
