@@ -4,6 +4,9 @@ import { pipeline, env } from "@huggingface/transformers";
 env.allowLocalModels = false;
 env.allowRemoteModels = true;
 
+// Force WASM paths to local extension assets (bypass Manifest V3 CSP)
+env.backends.onnx.wasm.wasmPaths = chrome.runtime.getURL("assets/wasm/");
+
 export class WhisperService {
   private transcriber: any = null;
   private isReady = false;
