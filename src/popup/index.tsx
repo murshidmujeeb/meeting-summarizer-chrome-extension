@@ -10,7 +10,7 @@ import { SettingsModal } from "./components/SettingsModal";
 function IndexPopup() {
   const [activeTab, setActiveTab] = useState<'transcript' | 'summary'>('transcript');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { segments, isLive, startTranscription, stopTranscription, error } = useTranscription();
+  const { segments, isLive, startTranscription, stopTranscription, error, loadingProgress } = useTranscription();
 
   return (
     <div className={`meeting-summarizer-panel ${isLive ? 'recording' : ''}`}>
@@ -19,7 +19,8 @@ function IndexPopup() {
       <div className="panel-header">
         <div className="header-left">
           <h1 className="panel-title">Meeting Assistant</h1>
-          {isLive && <span className="status-badge recording">Recording</span>}
+          {isLive && !loadingProgress && <span className="status-badge recording">Recording</span>}
+          {loadingProgress && <span className="status-badge" style={{backgroundColor: '#eab308', color: '#fff'}}>Downloading Model... {loadingProgress.progress ? Math.round(loadingProgress.progress) + '%' : ''}</span>}
           {error && <span className="status-badge" style={{color: 'red'}}>Error</span>}
         </div>
         <div className="header-right" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -49,6 +50,12 @@ function IndexPopup() {
           Summary
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 text-red-600 p-3 text-xs border-b border-red-200 break-words" style={{maxHeight: '100px', overflowY: 'auto'}}>
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
       <div style={{flex: 1, overflow: 'hidden'}}>
         {activeTab === 'transcript' && (

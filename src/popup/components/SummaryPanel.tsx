@@ -86,6 +86,9 @@ export function SummaryPanel({ segments }: SummaryPanelProps) {
           <div className="summary-text whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
             {summary}
           </div>
+        )}
+      </div>
+
       {summary && (
         <div className="summary-actions flex gap-2 p-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">
           <button className="btn-secondary flex-1 py-2 px-3 bg-white border border-gray-300 rounded-md text-gray-900 text-sm font-medium hover:bg-gray-100 transition-colors" onClick={copySummary}>Copy</button>
