@@ -25,6 +25,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       try {
         await setupOffscreenDocument("tabs/offscreen.html");
         
+        // Give the offscreen document time to parse scripts and register listeners
+        await new Promise(r => setTimeout(r, 500));
+        
         // Init Whisper first
         await new Promise((resolve, reject) => {
           chrome.runtime.sendMessage({ action: "initWhisper" }, (res) => {

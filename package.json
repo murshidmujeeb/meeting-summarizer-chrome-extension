@@ -28,10 +28,13 @@
     "@types/react-dom": "18.2.18",
     "autoprefixer": "^10.4.17",
     "events": "^3.3.0",
+    "path-browserify": "^1.0.1",
     "postcss": "^8.4.35",
     "prettier": "3.2.4",
+    "stream-browserify": "^3.0.0",
     "tailwindcss": "^3.4.1",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "util": "^0.12.5"
   },
   "manifest": {
     "host_permissions": [
@@ -48,7 +51,10 @@
     }
   },
   "alias": {
+    "sharp": "./empty.js",
     "node:events": "events",
-    "sharp": false
+    "node:path": "path-browserify",
+    "node:util": "util",
+    "node:stream": "stream-browserify"
   }
 }
