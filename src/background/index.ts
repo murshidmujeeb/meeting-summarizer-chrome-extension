@@ -1,24 +1,19 @@
-import { AudioCaptureService } from "../services/audio";
-import { SessionManager } from "../services/storage";
-import { SpeakerDiarizationService } from "../services/diarization";
-import { whisperService } from "../services/whisperService";
-import { WhisperAdapter } from "../services/whisperAdapter";
-import { AudioFrame } from "../types";
+let offscreenCreating: Promise<void> | null = null;
 
-const audioCapture = new AudioCaptureService();
-const diarizationService = new SpeakerDiarizationService();
-const whisperAdapter = new WhisperAdapter();
-
-audioCapture.on('audioFrame', (frame: AudioFrame) => {
-  diarizationService.processAudioFrame(frame);
-  const speakerInfo = diarizationService.getCurrentSpeaker();
-
-  whisperAdapter.addFrame(frame.data, speakerInfo.speakerId, speakerInfo.confidence, (segment) => {
-    try {
-      chrome.runtime.sendMessage({ action: "whisperTranscriptSegment", segment });
-    } catch (e) {}
+async function setupOffscreenDocument(path: string) {
+  if (await chrome.offscreen.hasDocument()) return;
+  if (offscreenCreating) {
+    await offscreenCreating;
+    return;
+  }
+  offscreenCreating = chrome.offscreen.createDocument({
+    url: path,
+    reasons: [chrome.offscreen.Reason.USER_MEDIA],
+    justification: "Recording tab audio for transcription"
   });
-});
+  await offscreenCreating;
+  offscreenCreating = null;
+}
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Meeting Summarizer Extension Installed");
@@ -26,26 +21,60 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "startRecording") {
-    whisperService.initialize((progress) => {
+    (async () => {
       try {
-        chrome.runtime.sendMessage({ action: "whisperProgress", progress });
-      } catch (e) {}
-    })
-    .then(() => audioCapture.startRecording())
-    .then(() => sendResponse({ success: true }))
-    .catch(e => sendResponse({ error: e.message }));
+        await setupOffscreenDocument("tabs/offscreen.html");
+        
+        // Init Whisper first
+        await new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage({ action: "initWhisper" }, (res) => {
+            if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+            else if (res?.error) reject(new Error(res.error));
+            else resolve(res);
+          });
+        });
+
+        // Get Stream ID from active tab
+        const tab = await new Promise<chrome.tabs.Tab>((resolve) => {
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => resolve(tabs[0]));
+        });
+
+        const streamId = await new Promise<string>((resolve, reject) => {
+          chrome.tabCapture.getMediaStreamId({ targetTabId: tab.id }, (streamId) => {
+             if (streamId) resolve(streamId);
+             else reject(new Error("Failed to get stream id: " + chrome.runtime.lastError?.message));
+          });
+        });
+
+        // Start recording in offscreen doc
+        await new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage({ action: "startOffscreenRecording", streamId }, (res) => {
+            if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+            else if (res?.error) reject(new Error(res.error));
+            else resolve(res);
+          });
+        });
+
+        sendResponse({ success: true });
+      } catch (e: any) {
+        sendResponse({ error: e.message });
+      }
+    })();
     
-    return true; // Keep response channel open for async
+    return true; 
   }
+
   if (request.action === "stopRecording") {
-    audioCapture.stopRecording()
-      .then(() => sendResponse({ success: true }))
-      .catch(e => sendResponse({ error: e.message }));
+    chrome.runtime.sendMessage({ action: "stopOffscreenRecording" }, (res) => {
+      sendResponse(res || { success: true });
+    });
     return true;
   }
+
   if (request.action === "getCurrentSpeaker") {
-    const speakerInfo = diarizationService.getCurrentSpeaker();
-    sendResponse(speakerInfo);
-    return false; // Synchronous response
+    chrome.runtime.sendMessage({ action: "getCurrentSpeakerOffscreen" }, (res) => {
+      sendResponse(res);
+    });
+    return true;
   }
 });

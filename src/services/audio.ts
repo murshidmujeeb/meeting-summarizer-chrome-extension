@@ -22,6 +22,26 @@ export class AudioCaptureService {
     }
   }
 
+  public async startRecordingWithStream(stream: MediaStream): Promise<void> {
+    if (this.isRecording) return;
+    
+    try {
+      this.stream = stream;
+      this.processor = new AudioProcessor();
+      await this.processor.setupContext(this.stream!, CONFIG.CHUNK_SIZE_MS, (frame: AudioFrame) => {
+        if (!this.isPaused) {
+          this.emit('audioFrame', frame);
+        }
+      });
+
+      this.isRecording = true;
+      this.isPaused = false;
+    } catch (e) {
+      console.error("Failed to start recording with stream:", e);
+      throw e;
+    }
+  }
+
   public async startRecording(): Promise<void> {
     if (this.isRecording) return;
     
