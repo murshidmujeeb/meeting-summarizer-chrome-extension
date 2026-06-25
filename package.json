@@ -10,8 +10,8 @@
     "package": "plasmo package"
   },
   "dependencies": {
-    "@huggingface/transformers": "^4.2.0",
     "@mlc-ai/web-llm": "^0.2.84",
+    "@xenova/transformers": "^2.17.2",
     "dexie": "^4.4.4",
     "onnxruntime-web": "^1.27.0",
     "pdf-lib": "^1.17.1",
@@ -56,6 +56,8 @@
     "node:events": "events",
     "node:path": "path-browserify",
     "node:util": "util",
-    "node:stream": "stream-browserify"
+    "node:stream": "stream-browserify",
+    "node:os": "./empty.js",
+    "node:fs": "./empty.js"
   }
 }

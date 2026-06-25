@@ -1,4 +1,4 @@
-import { pipeline, env } from "@huggingface/transformers";
+import { pipeline, env } from "@xenova/transformers";
 
 // Critical: Set proxy for CORS inside extension
 env.allowLocalModels = false;
@@ -6,6 +6,9 @@ env.allowRemoteModels = true;
 
 // Force WASM paths to local extension assets (bypass Manifest V3 CSP)
 env.backends.onnx.wasm.wasmPaths = chrome.runtime.getURL("assets/wasm/");
+
+// Disable threading to prevent Chrome from blocking the dynamic .mjs Web Worker imports
+env.backends.onnx.wasm.numThreads = 1;
 
 export class WhisperService {
   private transcriber: any = null;
